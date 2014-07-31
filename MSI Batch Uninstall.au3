@@ -108,7 +108,7 @@ Func EnumerateProducts()
 
 	InitLog($debuglog)
 
-	_FileWriteLog($debuglog, "** Starting on " & @UserName & "@" & @ComputerName & @CRLF & "  OS: " & @OSType & " " & @OSVersion & " " & @OSArch & @CRLF)
+	; _FileWriteLog($debuglog, "** Starting on " & @UserName & "@" & @ComputerName & @CRLF & "  OS: " & @OSType & " " & @OSVersion & " " & @OSArch & @CRLF)
 
 	If @OSArch = "X86" Then
 		Dim $InstallerInfoPaths[5]
@@ -131,55 +131,55 @@ Func EnumerateProducts()
 	Dim $products[1][4]
 
 	For $a = 1 To UBound($InstallerInfoPaths, 1) - 1
-		_FileWriteLog($debuglog, "** Checking path " & $a & " of " & UBound($InstallerInfoPaths, 1) - 1 & " ****************************************" & @CRLF)
+		; _FileWriteLog($debuglog, "** Checking path " & $a & " of " & UBound($InstallerInfoPaths, 1) - 1 & " ****************************************" & @CRLF)
 		Dim $users[1]
 		Local $InstallerInfoPath = $InstallerInfoPaths[$a]
 
 		;Enumerate Users
 		If StringInStr($InstallerInfoPath, "UserData") Then
-			_FileWriteLog($debuglog, "Checking for user subkeys in " & $InstallerInfoPath & @CRLF)
+			; _FileWriteLog($debuglog, "Checking for user subkeys in " & $InstallerInfoPath & @CRLF)
 			Local $i = 0
 			While 1
 				$i = $i + 1
-				_FileWriteLog($debuglog, "Checking subkey " & $i)
+				; _FileWriteLog($debuglog, "Checking subkey " & $i)
 				Local $subkey = RegEnumKey($InstallerInfoPath, $i)
 				If @error Then
-					_FileWriteLog($debuglog, "Exiting check with Error " & @error)
+					; _FileWriteLog($debuglog, "Exiting check with Error " & @error)
 					ExitLoop
 				EndIf
-				_FileWriteLog($debuglog, "  Found subkey: " & $subkey & @CRLF)
+				; _FileWriteLog($debuglog, "  Found subkey: " & $subkey & @CRLF)
 				ReDim $users[UBound($users, 1) + 1]
 				$users[UBound($users, 1) - 1] = $subkey
 			WEnd
-			_FileWriteLog($debuglog, "  $users contains " & UBound($users, 1) - 1 & " elements." & @CRLF)
+			; _FileWriteLog($debuglog, "  $users contains " & UBound($users, 1) - 1 & " elements." & @CRLF)
 		Else
-			_FileWriteLog($debuglog, "Skipping user subkey check in " & $InstallerInfoPath & @CRLF)
+			; _FileWriteLog($debuglog, "Skipping user subkey check in " & $InstallerInfoPath & @CRLF)
 			ReDim $users[UBound($users, 1) + 1]
 			$users[UBound($users, 1) - 1] = ""
 		EndIf
 
 		;Search Products
-		_FileWriteLog($debuglog, "Checking for products..." & @CRLF)
+		; _FileWriteLog($debuglog, "Checking for products..." & @CRLF)
 		For $u = 1 To UBound($users, 1) - 1
 			If StringLeft($InstallerInfoPath, 4) = "HKLM" Then
-				_FileWriteLog($debuglog, "  HKLM Path Detected" & @CRLF)
+				; _FileWriteLog($debuglog, "  HKLM Path Detected" & @CRLF)
 				$userPath = $InstallerInfoPath & "\" & $users[$u] & "\Products"
 			ElseIf StringLeft($InstallerInfoPath, 4) = "HKCU" Then
-				_FileWriteLog($debuglog, "  HKCU Path Detected" & @CRLF)
+				; _FileWriteLog($debuglog, "  HKCU Path Detected" & @CRLF)
 				$userPath = $InstallerInfoPath & "\" & $users[$u]
 			EndIf
 
-			_FileWriteLog($debuglog, "  (" & $u & ") Checking for products in " & $userPath & @CRLF)
+			; _FileWriteLog($debuglog, "  (" & $u & ") Checking for products in " & $userPath & @CRLF)
 			Local $p = 0
 			While 1
 				$p = $p + 1
 				Local $product = RegEnumKey($userPath, $p)
 				If @error Then
-					_FileWriteLog($debuglog, "Exiting check with Error " & @error)
+					; _FileWriteLog($debuglog, "Exiting check with Error " & @error)
 					ExitLoop
 				EndIf
 				$ProductPath = $userPath & "\" & $product & "\InstallProperties"
-				_FileWriteLog($debuglog, "    Product found: " & $ProductPath & @CRLF)
+				; _FileWriteLog($debuglog, "    Product found: " & $ProductPath & @CRLF)
 
 				$ProductName = RegRead($ProductPath, "DisplayName")
 				$ProductVersion = RegRead($ProductPath, "DisplayVersion")
@@ -191,24 +191,24 @@ Func EnumerateProducts()
 				$ProductInstallLocation = RegRead($ProductPath, "InstallLocation")
 
 				If Not $ProductUninstall Then
-					_FileWriteLog($debuglog, "    $ProductUninstall blank. Using LocalPackage instead." & @CRLF)
+					; _FileWriteLog($debuglog, "    $ProductUninstall blank. Using LocalPackage instead." & @CRLF)
 					If RegRead($ProductPath, "LocalPackage") Then
 						$ProductUninstall = "MsiExec.exe /X " & RegRead($ProductPath, "LocalPackage")
 					ElseIf RegRead($ProductPath, "UninstallString") Then
 						$ProductUninstall = RegRead($ProductPath, "UninstallString")
 					Else
-						_FileWriteLog($debuglog, "    LocalPackage and UninstallString blank or non-existant." & @CRLF)
+						; _FileWriteLog($debuglog, "    LocalPackage and UninstallString blank or non-existant." & @CRLF)
 					EndIf
 				EndIf
 
 				If StringLeft($ProductUninstall, 11) = "MsiExec.exe" Then
 					If StringInStr($ProductUninstall, "/I") Then
-						_FileWriteLog($debuglog, "    Replacing /I with /X." & @CRLF)
+						; _FileWriteLog($debuglog, "    Replacing /I with /X." & @CRLF)
 						$ProductUninstall = StringReplace($ProductUninstall, "/I", "/X")
 					EndIf
 				EndIf
 
-				_FileWriteLog($debuglog, "      " & $ProductName & "; " & $ProductVersion & "; " & $ProductUninstall & "; " & $ProductPublisher & "; " & $ProductRegOwner & @CRLF)
+				; _FileWriteLog($debuglog, "      " & $ProductName & "; " & $ProductVersion & "; " & $ProductUninstall & "; " & $ProductPublisher & "; " & $ProductRegOwner & @CRLF)
 
 				If $ProductUninstall Then
 					ReDim $products[UBound($products, 1) + 1][5]
@@ -217,11 +217,11 @@ Func EnumerateProducts()
 					$products[UBound($products, 1) - 1][2] = $ProductPublisher
 					$products[UBound($products, 1) - 1][3] = $ProductInstallDate
 					$products[UBound($products, 1) - 1][4] = $ProductInstallLocation
-					_FileWriteLog($debuglog, "Found: " & $products[UBound($products, 1) - 1][1] & ", " & $products[UBound($products, 1) - 1][2] & ", " & $products[UBound($products, 1) - 1][0] & ", " & $ProductPath)
+					; _FileWriteLog($debuglog, "Found: " & $products[UBound($products, 1) - 1][1] & ", " & $products[UBound($products, 1) - 1][2] & ", " & $products[UBound($products, 1) - 1][0] & ", " & $ProductPath)
 					_FileWriteLog($logfile, "Found: " & $products[UBound($products, 1) - 1][1] & ", " & $products[UBound($products, 1) - 1][2] & ", " & $products[UBound($products, 1) - 1][0] & ", " & $ProductPath)
 				EndIf
 			WEnd
-			_FileWriteLog($debuglog, "Between loops, Error set to " & @error)
+			; _FileWriteLog($debuglog, "Between loops, Error set to " & @error)
 		Next
 	Next
 
@@ -232,6 +232,7 @@ Func EnumerateProducts()
 	;    "InstallDate" (optional)
 	;    "DisplayVersion" (optional)
 	;    "Publisher" (optional)
+    
 	;  HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall
 	;    If "UninstallString" else skip
 	;    "DisplayName" (optional)
